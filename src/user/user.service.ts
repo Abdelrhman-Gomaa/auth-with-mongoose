@@ -1,3 +1,4 @@
+import { ErrorCodeEnum } from './../exceptions/error-code.enum';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './models/user.model';
@@ -9,7 +10,9 @@ import * as slug from 'speakingurl';
 import * as jwt from 'jsonwebtoken';
 import { UserRoleEnum } from './user.enum';
 import { BaseHttpException } from 'src/exceptions/base-http-exception';
-import { ErrorCodeEnum } from 'src/exceptions/error-code.enum';
+import { EmailAndPasswordLoginInput } from './input/email-password-login.input';
+import { PhoneNumberAndPasswordLoginInput } from './input/phone-password-login.input';
+import { TokenPayload } from 'src/auth/auth-token-payload.interface';
 
 @Injectable()
 export class UserService {
@@ -40,8 +43,22 @@ export class UserService {
         return registerNewUser.save();
     }
 
-    private async hashPassword(password: string): Promise<string> {
-        return await bcrypt.hash(password, 12);
+    async emailAndPasswordLogin(input: EmailAndPasswordLoginInput) {
+        const user = await this.userModel.findOne({ email: input.email });
+        if (!user) throw new BaseHttpException(ErrorCodeEnum.INVALID_CREDENTIALS);
+        await this.matchPassword(input.password, user.password);
+        const payload: TokenPayload = { userId: user.id };
+        const token = jwt.sign(payload, process.env.JWT_SECRET);
+        return { token };
+    }
+
+    async phoneNumberAndPasswordLogin(input: PhoneNumberAndPasswordLoginInput) {
+        const user = await this.userModel.findOne({ phoneNumber: input.phoneNumber });
+        if (!user) throw new BaseHttpException(ErrorCodeEnum.INVALID_CREDENTIALS);
+        await this.matchPassword(input.password, user.password);
+        const payload: TokenPayload = { userId: user.id };
+        const token = jwt.sign(payload, process.env.JWT_SECRET);
+        return { token };
     }
 
     private slugify(value: string): string {
@@ -53,8 +70,12 @@ export class UserService {
             }`.toLowerCase();
     }
 
+    private async hashPassword(password: string): Promise<string> {
+        return await bcrypt.hash(password, 12);
+    }
+
     private async matchPassword(password: string, hash: string) {
         const isMatched = await bcrypt.compare(password, hash);
-        if (!isMatched) throw new Error(' Incorrect Password');
+        if (!isMatched) throw new BaseHttpException(ErrorCodeEnum.INCORRECT_PASSWORD);
     }
 }
