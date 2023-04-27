@@ -28,7 +28,7 @@ export class RegisterInput {
     @ApiProperty()
     @IsEmail()
     @IsNotEmpty()
-    notVerifiedEmail: string;
+    email: string;
 
     @ApiProperty()
     @IsMobilePhone(null, null, { message: 'Invalid Phone Number' })

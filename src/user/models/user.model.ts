@@ -24,13 +24,13 @@ export class User {
 
     @Prop({
         type: String,
+        required: true,
+        unique: true,
     })
-    notVerifiedEmail?: string;
+    email: string;
 
-    @Prop({
-        type: String
-    })
-    verifiedEmail?: string;
+    @Prop({ type: Boolean, default: false })
+    isVerified: boolean;
 
     @Prop()
     slug: string;

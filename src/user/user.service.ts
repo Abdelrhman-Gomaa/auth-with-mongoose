@@ -22,14 +22,14 @@ export class UserService {
     }
 
     async registerAsUser(input: RegisterInput): Promise<User> {
-        const errorIfUserWithVerifiedEmailExists =
-            await this.userModel.findOne({ verifiedEmail: input.notVerifiedEmail });
-        if (errorIfUserWithVerifiedEmailExists)
+        const errorIfUserWithEmailOrUserNameExists =
+            await this.userModel.findOne({ $or: [{ email: input.email }, { userName: input.userName }] });
+        if (errorIfUserWithEmailOrUserNameExists)
             throw new BaseHttpException(ErrorCodeEnum.USERNAME_OR_EMAIL_ALREADY_EXIST);
-        const deleteDuplicatedUsersAtNotVerifiedEmail =
-            await this.userModel.findOne({ notVerifiedEmail: input.notVerifiedEmail });
-        if (deleteDuplicatedUsersAtNotVerifiedEmail)
-            await this.userModel.deleteOne({ _id: deleteDuplicatedUsersAtNotVerifiedEmail.id });
+        const deleteDuplicatedUsersAtNotVerified =
+            await this.userModel.findOne({ isVerified: false });
+        if (deleteDuplicatedUsersAtNotVerified)
+            await this.userModel.deleteOne({ _id: deleteDuplicatedUsersAtNotVerified.id });
         const registerNewUser = new this.userModel({
             ...input,
             fullName: `${input.firstName} ${input.lastName || ''}`.trim(),
