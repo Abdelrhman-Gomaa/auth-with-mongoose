@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, ValidationPipe, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { User } from './models/user.model';
@@ -8,6 +8,7 @@ import { EmailAndPasswordLoginInput } from './input/email-password-login.input';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AdminGuard } from 'src/auth/admin.guard';
 import { CurrentUser } from 'src/auth/auth-user.decorator';
+import { ChangePasswordInput } from './input/change.password.input';
 
 @ApiTags('User')
 @Controller('user')
@@ -46,5 +47,11 @@ export class UserController {
     @Post('/loginWithPhoneNumber')
     async phoneNumberAndPasswordLogin(@Body(ValidationPipe) input: PhoneNumberAndPasswordLoginInput) {
         return await this.userService.phoneNumberAndPasswordLogin(input);
+    }
+
+    @ApiOperation({ summary: "Login with Phone Number to App" })
+    @Patch('/changePassword')
+    async changePassword(@CurrentUser() userId: string, @Body(ValidationPipe) input: ChangePasswordInput) {
+        return await this.userService.changePassword(userId, input);
     }
 }

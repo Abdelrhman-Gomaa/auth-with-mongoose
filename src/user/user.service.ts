@@ -13,6 +13,7 @@ import { BaseHttpException } from 'src/exceptions/base-http-exception';
 import { EmailAndPasswordLoginInput } from './input/email-password-login.input';
 import { PhoneNumberAndPasswordLoginInput } from './input/phone-password-login.input';
 import { TokenPayload } from 'src/auth/auth-token-payload.interface';
+import { ChangePasswordInput } from './input/change.password.input';
 
 @Injectable()
 export class UserService {
@@ -24,8 +25,8 @@ export class UserService {
         return await this.userModel.find();
     }
 
-    async me(userId: string){
-        return await this.userModel.findOne({_id: userId})
+    async me(userId: string) {
+        return await this.userModel.findOne({ _id: userId });
     }
 
     async registerAsUser(input: RegisterInput): Promise<User> {
@@ -63,6 +64,16 @@ export class UserService {
         const payload: TokenPayload = { userId: user.id };
         const token = jwt.sign(payload, process.env.JWT_SECRET);
         return { token };
+    }
+
+    async changePassword(currentUser: string, input: ChangePasswordInput) {
+        const user = await this.userModel.findOne({ _id: currentUser });
+        if (!user) throw new BaseHttpException(ErrorCodeEnum.INVALID_USER);
+        await this.matchPassword(input.oldPassword, user.password);
+        if (input.newPassword !== input.confirmPassword) throw new BaseHttpException(ErrorCodeEnum.NEW_PASSWORD_NOT_CONFIRMED);
+        if (input.newPassword === input.oldPassword) throw new BaseHttpException(ErrorCodeEnum.OLD_PASSWORD_AND_NEW_ARE_MATCHED);
+        const hashPassword = await this.hashPassword(input.newPassword);
+        return await this.userModel.updateOne({ _id: user.id }, { password: hashPassword });
     }
 
     private slugify(value: string): string {
