@@ -28,8 +28,7 @@ export class User {
     notVerifiedEmail?: string;
 
     @Prop({
-        type: String,
-        unique: true,
+        type: String
     })
     verifiedEmail?: string;
 
