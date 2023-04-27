@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { User } from './models/user.model';
 import { RegisterInput } from './input/register.input';
 import { PhoneNumberAndPasswordLoginInput } from './input/phone-password-login.input';
 import { EmailAndPasswordLoginInput } from './input/email-password-login.input';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { AdminGuard } from 'src/auth/admin.guard';
+import { CurrentUser } from 'src/auth/auth-user.decorator';
 
 @ApiTags('User')
 @Controller('user')
@@ -13,10 +16,18 @@ export class UserController {
         private readonly userService: UserService
     ) { }
 
+    @UseGuards(AdminGuard)
     @ApiOperation({ summary: "Find All User" })
     @Get()
     async findAllUser(): Promise<User[]> {
         return await this.userService.findAllUser();
+    }
+
+    @UseGuards(AuthGuard)
+    @ApiOperation({ summary: "Find Current User" })
+    @Get('/me')
+    async me(@CurrentUser() userId: string): Promise<User> {
+        return await this.userService.me(userId);
     }
 
     @ApiOperation({ summary: "Create A new User / Registration" })

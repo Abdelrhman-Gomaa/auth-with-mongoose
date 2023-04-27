@@ -24,6 +24,10 @@ export class UserService {
         return await this.userModel.find();
     }
 
+    async me(userId: string){
+        return await this.userModel.findOne({_id: userId})
+    }
+
     async registerAsUser(input: RegisterInput): Promise<User> {
         const errorIfUserWithEmailOrUserNameExists =
             await this.userModel.findOne({ $or: [{ email: input.email }, { userName: input.userName }] });
